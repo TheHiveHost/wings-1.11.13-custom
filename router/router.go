@@ -79,6 +79,9 @@ func Configure(m *wserver.Manager, client remote.Client) *gin.Engine {
 		server.POST("/reinstall", postServerReinstall)
 		server.POST("/sync", postServerSync)
 		server.POST("/ws/deny", postServerDenyWSTokens)
+		server.GET("/version", getInstalledVersion)
+		server.POST("/proxy/create", postServerProxyCreate)
+		server.POST("/proxy/delete", postServerProxyDelete)
 
 		// This archive request causes the archive to start being created
 		// this should only be triggered by the panel.
@@ -88,6 +91,7 @@ func Configure(m *wserver.Manager, client remote.Client) *gin.Engine {
 		files := server.Group("/files")
 		{
 			files.GET("/contents", getServerFileContents)
+			files.GET("/fingerprints", getServerFileFingerprints)
 			files.GET("/list-directory", getServerListDirectory)
 			files.PUT("/rename", putServerRenameFiles)
 			files.POST("/copy", postServerCopyFile)
@@ -97,6 +101,8 @@ func Configure(m *wserver.Manager, client remote.Client) *gin.Engine {
 			files.POST("/compress", postServerCompressFiles)
 			files.POST("/decompress", postServerDecompressFiles)
 			files.POST("/chmod", postServerChmodFile)
+			// GET FOLDER SIZE ADDON
+			files.POST("/size", getFolderSize)
 
 			files.GET("/pull", middleware.RemoteDownloadEnabled(), getServerPullingFiles)
 			files.POST("/pull", middleware.RemoteDownloadEnabled(), postServerPullRemoteFile)
