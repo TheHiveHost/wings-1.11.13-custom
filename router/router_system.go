@@ -51,6 +51,13 @@ func getSystemInformation(c *gin.Context) {
 	})
 }
 
+// Returns a live snapshot of host resource utilization: CPU usage/threads/model,
+// memory, disk, swap, and disk/network I/O rates. Backed by a background sampler
+// (system.StartStatsSampler) so this never blocks on its own measurement window.
+func getSystemStats(c *gin.Context) {
+	c.JSON(http.StatusOK, system.GetStats())
+}
+
 // Returns all the servers that are registered and configured correctly on
 // this wings instance.
 func getAllServers(c *gin.Context) {

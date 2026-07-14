@@ -87,6 +87,19 @@ system/         Utilities (atomic types, rate limiters, locker, sink pools)
 - `GET /api/servers/:server/version` — detect installed Forge/NeoForge version or JAR hash
 - `router/router_server_versions.go:getInstalledVersion()`
 
+### Node Live Stats
+- `GET /api/system/stats` — live host resource snapshot: CPU usage %/threads/model name, memory,
+  disk (measured against `config.System.RootDirectory`, the volume holding server data), swap,
+  disk I/O rate, network I/O rate.
+- `router/router_system.go:getSystemStats()` — thin handler, just reads the cache.
+- `system/stats.go` — background sampler (`StartStatsSampler`, started once from `cmd/root.go` next
+  to the archive/backup directory setup) refreshes an in-memory snapshot every second via
+  `github.com/shirou/gopsutil/v3`, so the HTTP handler never blocks on its own measurement window.
+  `disk.IOCounters()` reports both a whole block device (e.g. `vda`) and each of its partitions
+  (`vda1`, `vda15`, ...) as separate entries whose byte counts overlap — `resolveDiskDevice()`
+  matches the longest mountpoint prefix (like `df`) to track exactly one device, not a sum across
+  all of them.
+
 ## Testing
 
 Tests use `github.com/stretchr/testify` with table-driven patterns. Most test coverage is in `server/filesystem/`, `system/`, `events/`, and `remote/`.
