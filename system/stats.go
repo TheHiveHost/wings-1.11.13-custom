@@ -81,6 +81,11 @@ func StartStatsSampler(diskPath string) {
 		// only ever read counters for that one device.
 		diskDevice := resolveDiskDevice(diskPath)
 
+		// The processor model never changes for the life of the process, so
+		// resolve it once here instead of paying cpu.Info()'s ~120µs cost on
+		// every single tick forever.
+		modelName := cpuModelName()
+
 		// Prime gopsutil's internal delta tracking for both CPU and IO
 		// counters before the first real sample, otherwise the first
 		// couple of reported values would be meaningless cumulative
@@ -100,7 +105,7 @@ func StartStatsSampler(diskPath string) {
 			s := Stats{
 				CPU: CPUStats{
 					Threads:   runtime.NumCPU(),
-					ModelName: cpuModelName(),
+					ModelName: modelName,
 				},
 			}
 
