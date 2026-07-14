@@ -313,6 +313,10 @@ func rootCmdRun(cmd *cobra.Command, _ []string) {
 		log.WithField("error", err).Error("failed to create backup directory")
 	}
 
+	// Start the background host-stats sampler backing GET /api/system/stats,
+	// measuring disk usage against the volume that actually holds server data.
+	system.StartStatsSampler(sys.RootDirectory)
+
 	autotls, _ := cmd.Flags().GetBool("auto-tls")
 	tlshostname, _ := cmd.Flags().GetString("tls-hostname")
 	if autotls && tlshostname == "" {
