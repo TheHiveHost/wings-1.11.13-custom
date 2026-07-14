@@ -123,6 +123,21 @@ func (c *client) SetTransferStatus(ctx context.Context, uuid string, successful 
 	return nil
 }
 
+// SendCrashReport notifies the Panel that this server's process just crashed, so
+// it can email the owner if they have that notification enabled. Best-effort: the
+// caller should not treat a failure here as fatal to the crash-handling flow.
+func (c *client) SendCrashReport(ctx context.Context, uuid string, exitCode uint32, oomKilled bool) error {
+	resp, err := c.Post(ctx, fmt.Sprintf("/servers/%s/crash", uuid), d{
+		"exit_code":  exitCode,
+		"oom_killed": oomKilled,
+	})
+	if err != nil {
+		return err
+	}
+	_ = resp.Body.Close()
+	return nil
+}
+
 // ValidateSftpCredentials makes a request to determine if the username and
 // password combination provided is associated with a valid server on the instance
 // using the Panel's authentication control mechanisms. This will get itself
