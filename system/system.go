@@ -3,6 +3,7 @@ package system
 import (
 	"context"
 	"runtime"
+	"time"
 
 	"github.com/acobaugh/osrelease"
 	"github.com/docker/docker/api/types"
@@ -15,6 +16,19 @@ type Information struct {
 	Version string            `json:"version"`
 	Docker  DockerInformation `json:"docker"`
 	System  System            `json:"system"`
+	Time    TimeInformation   `json:"time"`
+}
+
+// TimeInformation reports the host's real, local system clock — as opposed to
+// any per-server timezone configured on the Panel, which only affects the TZ
+// env var inside a server's container, not the underlying node's own clock.
+type TimeInformation struct {
+	// RFC3339 timestamp of the node's current local time, e.g. "2026-07-14T02:15:30-06:00".
+	Timestamp string `json:"timestamp"`
+	// Local zone abbreviation as reported by the OS, e.g. "CST", "UTC".
+	Timezone string `json:"timezone"`
+	// Offset from UTC, in seconds, east of UTC (matches Go's time.Zone()).
+	UTCOffsetSeconds int `json:"utc_offset_seconds"`
 }
 
 type DockerInformation struct {
@@ -89,6 +103,9 @@ func GetSystemInformation() (*Information, error) {
 		break
 	}
 
+	now := time.Now()
+	zoneName, offsetSeconds := now.Zone()
+
 	return &Information{
 		Version: Version,
 		Docker: DockerInformation{
@@ -118,6 +135,11 @@ func GetSystemInformation() (*Information, error) {
 			KernelVersion: k.String(),
 			OS:            os,
 			OSType:        runtime.GOOS,
+		},
+		Time: TimeInformation{
+			Timestamp:         now.Format(time.RFC3339),
+			Timezone:          zoneName,
+			UTCOffsetSeconds:  offsetSeconds,
 		},
 	}, nil
 }
