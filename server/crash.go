@@ -73,6 +73,16 @@ func (s *Server) handleServerCrash() error {
 	s.PublishConsoleOutputFromDaemon(fmt.Sprintf("Exit code: %d", exitCode))
 	s.PublishConsoleOutputFromDaemon(fmt.Sprintf("Out of memory: %t", oomKilled))
 
+	// Let the Panel know a crash happened regardless of whether an automatic restart
+	// follows below — it decides on its own whether the owner has email notifications
+	// enabled for this server. Fire-and-forget so a slow/unreachable Panel never delays
+	// the restart flow.
+	go func() {
+		if err := s.client.SendCrashReport(s.Context(), s.ID(), exitCode, oomKilled); err != nil {
+			s.Log().WithField("error", err).Warn("failed to notify panel of server crash")
+		}
+	}()
+
 	c := s.crasher.LastCrashTime()
 	timeout := config.Get().System.CrashDetection.Timeout
 
